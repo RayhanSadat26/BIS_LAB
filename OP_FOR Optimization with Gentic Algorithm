@@ -1,0 +1,13 @@
+Generation 1: Best x = 1.26631, f(x) = 2.10372
+Generation 2: Best x = 1.24359, f(x) = 2.21842
+Generation 3: Best x = 1.44030, f(x) = 2.37398
+Generation 4: Best x = 1.24359, f(x) = 2.21842
+Generation 5: Best x = 1.25743, f(x) = 2.22333
+Generation 6: Best x = 1.04416, f(x) = 2.02661
+Generation 7: Best x = 1.05769, f(x) = 2.02699
+Generation 8: Best x = 1.05475, f(x) = 2.04304
+Generation 9: Best x = 1.05212, f(x) = 2.04978
+Generation 10: Best x = 1.05036, f(x) = 2.05029
+
+Optimal solution found:
+x = 1.05036, f(x) = 2.05029
