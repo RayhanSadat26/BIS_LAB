@@ -1,0 +1,48 @@
+import random
+import math
+def fitness(x):
+    return x * math.sin(10 * math.pi * x) + 1
+def generate_population(size, lower, upper):
+    return [random.uniform(lower, upper) for _ in range(size)]
+
+def selection(population, k=3):
+    selected = random.sample(population, k)
+    return max(selected, key=fitness)
+
+# Crossover (single-point)
+def crossover(parent1, parent2):
+    alpha = random.random()
+    return alpha * parent1 + (1 - alpha) * parent2
+
+# Mutation
+def mutate(x, lower, upper, mutation_rate=0.1):
+    if random.random() < mutation_rate:
+        return random.uniform(lower, upper)
+    return x
+
+# Genetic Algorithm
+def genetic_algorithm(pop_size=20, generations=10, lower=-1, upper=2):
+    population = generate_population(pop_size, lower, upper)
+
+    for gen in range(generations):
+        new_population = []
+        for _ in range(pop_size):
+            # Selection
+            p1, p2 = selection(population), selection(population)
+            # Crossover
+            child = crossover(p1, p2)
+            # Mutation
+            child = mutate(child, lower, upper)
+            new_population.append(child)
+        population = new_population
+
+        # Track best solution
+        best = max(population, key=fitness)
+        print(f"Generation {gen+1}: Best x = {best:.5f}, f(x) = {fitness(best):.5f}")
+
+    return best
+
+# Run GA
+best_solution = genetic_algorithm()
+print("\nOptimal solution found:")
+print(f"x = {best_solution:.5f}, f(x) = {fitness(best_solution):.5f}")
