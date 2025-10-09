@@ -1,0 +1,86 @@
+import random
+
+TERMINALS = ['X0', 'X1']
+FUNCTIONS = ['AND', 'OR', 'NOT']
+TRUTH_TABLE = [
+    {'X0':0,'X1':0,'OUT':0},
+    {'X0':0,'X1':1,'OUT':1},
+    {'X0':1,'X1':0,'OUT':1},
+    {'X0':1,'X1':1,'OUT':0},
+]
+
+HEAD_LENGTH = 5
+MAX_ARITY = 2  # AND/OR
+TAIL_LENGTH = HEAD_LENGTH * (MAX_ARITY - 1) + 1
+GENE_LENGTH = HEAD_LENGTH + TAIL_LENGTH
+
+def random_chromosome():
+    chrom = []
+    # Head: can be functions or terminals
+    for _ in range(HEAD_LENGTH):
+        chrom.append(random.choice(FUNCTIONS + TERMINALS))
+    # Tail: only terminals
+    for _ in range(TAIL_LENGTH):
+        chrom.append(random.choice(TERMINALS))
+    return chrom
+
+def chromosome_to_tree(chrom):
+    def helper(index):
+        if index >= len(chrom):
+            # Safety: fallback to terminal
+            return [random.choice(TERMINALS)], index + 1
+        symbol = chrom[index]
+        if symbol in TERMINALS:
+            return [symbol], index + 1
+        elif symbol == 'NOT':
+            subtree, next_index = helper(index + 1)
+            return ['NOT', subtree], next_index
+        else:  # AND / OR
+            left, next_index = helper(index + 1)
+            right, next_index = helper(next_index)
+            return [symbol, left, right], next_index
+    tree, _ = helper(0)
+    return tree
+
+def eval_tree(tree, inputs):
+    if tree[0] in TERMINALS:
+        return inputs[tree[0]]
+    elif tree[0] == 'NOT':
+        return 1 - eval_tree(tree[1], inputs)
+    elif tree[0] == 'AND':
+        return eval_tree(tree[1], inputs) & eval_tree(tree[2], inputs)
+    elif tree[0] == 'OR':
+        return eval_tree(tree[1], inputs) | eval_tree(tree[2], inputs)
+
+def fitness(chrom):
+    tree = chromosome_to_tree(chrom)
+    return sum(eval_tree(tree, row) == row['OUT'] for row in TRUTH_TABLE)
+
+POP_SIZE = 50
+GENS = 100
+
+population = [random_chromosome() for _ in range(POP_SIZE)]
+
+for gen in range(GENS):
+    population.sort(key=lambda c: fitness(c), reverse=True)
+    best_fit = fitness(population[0])
+    if best_fit == len(TRUTH_TABLE):
+        print(f"Solution found at generation {gen}:")
+        print("Chromosome:", population[0])
+        print("Tree:", chromosome_to_tree(population[0]))
+        break
+    # Selection + mutation
+    top = population[:POP_SIZE//5]
+    new_pop = []
+    while len(new_pop) < POP_SIZE:
+        parent = random.choice(top)
+        child = parent.copy()
+        if random.random() < 0.3:
+            idx = random.randint(0, GENE_LENGTH - 1)
+            child[idx] = random.choice(FUNCTIONS + TERMINALS)
+        new_pop.append(child)
+    population = new_pop
+else:
+    print(f"No perfect solution found. Best fitness: {fitness(population[0])}")
+    print("Chromosome:", population[0])
+    print("Tree:", chromosome_to_tree(population[0]))
