@@ -1,0 +1,3 @@
+Solution found at generation 14:
+Chromosome: ['OR', 'AND', 'X1', 'NOT', 'X0', 'AND', 'X0', 'NOT', 'AND', 'AND', 'X0']
+Tree: ['OR', ['AND', ['X1'], ['NOT', ['X0']]], ['AND', ['X0'], ['NOT', ['AND', ['AND', ['X0'], ['X1']], ['X0']]]]]
