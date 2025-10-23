@@ -1,0 +1,77 @@
+import random
+import math
+
+# Problem data (example)
+values = [20, 5, 10, 40, 15, 25, 30, 50, 35, 45]
+weights = [1, 2, 3, 8, 7, 4, 6, 9, 5, 10]
+capacity = 20                   # max capacity of knapsack
+
+num_items = len(values)
+num_nests = 15       # population size (number of nests)
+max_generations = 100
+
+pa = 0.25            # discovery rate of alien eggs/solutions
+
+# Fitness function: total value if weight <= capacity, else 0
+def fitness(solution):
+    total_weight = sum(w * s for w, s in zip(weights, solution))
+    total_value = sum(v * s for v, s in zip(values, solution))
+    if total_weight > capacity:
+        return 0  # invalid solutions get 0 fitness
+    return total_value
+
+# Generate a random binary solution
+def random_solution():
+    return [random.choice([0,1]) for _ in range(num_items)]
+
+# Levy flight step for binary solution: flip bits randomly
+def levy_flight(solution):
+    new_solution = solution[:]
+    # Number of bits to flip depends on Levy distribution approximation
+    # Here we flip between 1 to 3 bits randomly
+    num_flips = random.randint(1, 3)
+    flip_indices = random.sample(range(num_items), num_flips)
+    for idx in flip_indices:
+        new_solution[idx] = 1 - new_solution[idx]  # flip bit
+    return new_solution
+
+# Generate initial nests
+nests = [[0]*num_items for _ in range(num_nests)]
+fitnesses = [fitness(n) for n in nests]
+
+# Find the best nest
+best_idx = fitnesses.index(max(fitnesses))
+best_nest = nests[best_idx][:]
+best_fitness = fitnesses[best_idx]
+
+for gen in range(max_generations):
+    # Generate new solutions by Levy flights
+    for i in range(num_nests):
+        new_nest = levy_flight(nests[i])
+        new_fit = fitness(new_nest)
+        # If new solution is better, replace it
+        if new_fit > fitnesses[i]:
+            nests[i] = new_nest
+            fitnesses[i] = new_fit
+
+    # Abandon some nests and create new ones
+    for i in range(num_nests):
+        if random.random() < pa:
+            nests[i] = random_solution()
+            fitnesses[i] = fitness(nests[i])
+
+    # Update best solution
+    current_best_idx = fitnesses.index(max(fitnesses))
+    if fitnesses[current_best_idx] > best_fitness:
+        best_fitness = fitnesses[current_best_idx]
+        best_nest = nests[current_best_idx][:]
+
+    # Optional: print progress every 10 generations
+    if gen % 1 == 0 or gen == max_generations - 1:
+        print(f"Gen {gen}: Best fitness = {best_fitness}")
+
+# Print final best solution
+print("\nBest solution found:")
+print("Selected items (0/1):", best_nest)
+print("Total value:", best_fitness)
+print("Total weight:", sum(w * s for w, s in zip(weights, best_nest)))
