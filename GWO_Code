@@ -1,0 +1,99 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# -------------------------------
+# Problem setup
+# -------------------------------
+np.random.seed(42)
+
+# Hourly electricity prices ($/kWh) for 24 hours
+prices = np.random.uniform(0.1, 0.4, 24)
+
+# Appliances: (name, energy per hour, duration in hours)
+appliances = [
+    ("Washing Machine", 1.0, 2),
+    ("Dishwasher", 1.2, 2),
+    ("Heater", 2.5, 3),
+    ("Air Conditioner", 3.0, 4)
+]
+
+num_appliances = len(appliances)
+hours = len(prices)
+
+# -------------------------------
+# GWO Parameters
+# -------------------------------
+num_wolves = 20     # population size
+max_iter = 100      # number of iterations
+
+# Each wolf's position: start times for each appliance (0-23)
+positions = np.random.randint(0, hours, (num_wolves, num_appliances))
+
+# -------------------------------
+# Fitness function: total cost
+# -------------------------------
+def fitness(schedule):
+    total_cost = 0
+    for i, (_, power, duration) in enumerate(appliances):
+        start = int(schedule[i])
+        for h in range(start, start + duration):
+            total_cost += power * prices[h % hours]
+    return total_cost
+
+# -------------------------------
+# Initialize alpha, beta, delta wolves
+# -------------------------------
+alpha, beta, delta = None, None, None
+alpha_score = beta_score = delta_score = float("inf")
+
+# -------------------------------
+# Main GWO Loop
+# -------------------------------
+convergence_curve = []
+
+for t in range(max_iter):
+    # Evaluate fitness of each wolf
+    for i in range(num_wolves):
+        cost = fitness(positions[i])
+        if cost < alpha_score:
+            alpha_score, alpha = cost, positions[i].copy()
+        elif cost < beta_score:
+            beta_score, beta = cost, positions[i].copy()
+        elif cost < delta_score:
+            delta_score, delta = cost, positions[i].copy()
+   
+    # Coefficient 'a' decreases linearly
+    a = 2 - t * (2 / max_iter)
+   
+    # Update positions
+    for i in range(num_wolves):
+        for j in range(num_appliances):
+            r1, r2 = np.random.rand(), np.random.rand()
+            A1, C1 = 2 * a * r1 - a, 2 * r2
+            D_alpha = abs(C1 * alpha[j] - positions[i][j])
+            X1 = alpha[j] - A1 * D_alpha
+
+            r1, r2 = np.random.rand(), np.random.rand()
+            A2, C2 = 2 * a * r1 - a, 2 * r2
+            D_beta = abs(C2 * beta[j] - positions[i][j])
+            X2 = beta[j] - A2 * D_beta
+
+            r1, r2 = np.random.rand(), np.random.rand()
+            A3, C3 = 2 * a * r1 - a, 2 * r2
+            D_delta = abs(C3 * delta[j] - positions[i][j])
+            X3 = delta[j] - A3 * D_delta
+
+            # New position
+            new_pos = (X1 + X2 + X3) / 3
+            # Clamp to valid range (0-23 hours)
+            positions[i][j] = np.clip(new_pos, 0, hours - 1)
+
+    convergence_curve.append(alpha_score)
+
+# -------------------------------
+# Results
+# -------------------------------
+print("\n=== Best Schedule Found ===")
+for i, (name, _, _) in enumerate(appliances):
+    print(f"{name} → Start at hour {int(alpha[i])}")
+print(f"Total cost: ${alpha_score:.2f}")
